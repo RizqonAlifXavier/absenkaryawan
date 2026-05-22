@@ -5,6 +5,8 @@
 
 /* ---- CSS Custom Properties (Design Tokens) ---- */
 :root {
+  color-scheme: light;
+  
   /* Background */
   --bg-primary: #f8fafc;
   --bg-secondary: #f1f5f9;

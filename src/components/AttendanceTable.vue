@@ -472,16 +472,77 @@ td {
     width: 100%;
   }
 
-  th, td {
-    padding: 10px 12px;
+  /* Force table to not be like tables anymore */
+  table, thead, tbody, th, td, tr {
+    display: block;
   }
+
+  /* Hide table headers (but not display: none;, for accessibility) */
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr.data-row {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--space-md);
+    background: var(--bg-card);
+    padding: var(--space-sm);
+    box-shadow: var(--shadow-sm);
+  }
+
+  td {
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+    padding: 10px 14px 10px 40% !important;
+    text-align: right;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  tr.data-row td:last-child {
+    border-bottom: 0;
+  }
+
+  td:before {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    width: 35%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  /* Label each cell using CSS pseudo-elements */
+  td:nth-of-type(1):before { content: "No"; }
+  td:nth-of-type(2):before { content: "Karyawan"; }
+  td:nth-of-type(3):before { content: "Tanggal"; }
+  td:nth-of-type(4):before { content: "Absen"; }
+  td:nth-of-type(5):before { content: "Keterangan"; }
 
   .avatar {
     display: none;
   }
 
+  .nama-cell {
+    justify-content: flex-end;
+  }
+
   .td-keterangan {
-    max-width: 150px;
+    max-width: 100%;
+    white-space: normal;
+    text-align: right;
   }
 }
 </style>
