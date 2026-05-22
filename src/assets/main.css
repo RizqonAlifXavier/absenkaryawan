@@ -261,8 +261,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .btn-primary:hover {
+  background: var(--gradient-primary);
+  color: #fff;
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   border-color: transparent;
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-sm {
