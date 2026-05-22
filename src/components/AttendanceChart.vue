@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ABSEN_TYPES, ABSEN_TYPE_ORDER } from '@/config/sheetsConfig'
 
 const props = defineProps<{
@@ -189,6 +189,10 @@ watch(activeTab, redraw)
 onMounted(() => {
   redraw()
   window.addEventListener('resize', redraw)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', redraw)
 })
 </script>
 

@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { fetchAttendanceData, generateDemoData } from '@/services/sheetsService'
 import type { AttendanceRecord } from '@/services/sheetsService'
 import {
@@ -75,6 +75,13 @@ export function useAttendance() {
   }
 
   // =============================================
+  // Auto-reset page ketika filter berubah
+  // =============================================
+  watch([filterDateStart, filterDateEnd, filterNama, filterJenisAbsen, searchQuery], () => {
+    currentPage.value = 1
+  }, { deep: true })
+
+  // =============================================
   // Filtered Records
   // =============================================
   const filteredRecords = computed(() => {
@@ -88,11 +95,9 @@ export function useAttendance() {
       result = result.filter((r) => r.tanggal <= filterDateEnd.value)
     }
 
-    // Filter by nama karyawan
+    // Filter by nama karyawan (exact match karena dari dropdown)
     if (filterNama.value) {
-      result = result.filter((r) =>
-        r.namaKaryawan.toLowerCase().includes(filterNama.value.toLowerCase()),
-      )
+      result = result.filter((r) => r.namaKaryawan === filterNama.value)
     }
 
     // Filter by jenis absen
@@ -230,15 +235,24 @@ export function useAttendance() {
   // =============================================
   // Export to CSV
   // =============================================
+  function escapeCsvField(field: string | number): string {
+    const str = String(field)
+    // Jika mengandung koma, quote, atau newline, wrap dengan quote
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`
+    }
+    return str
+  }
+
   function exportToCsv() {
     const headers = ['No', 'Nama Karyawan', 'Tanggal', 'Jenis Absen', 'Keterangan', 'Timestamp']
     const rows = sortedRecords.value.map((r, i) => [
-      i + 1,
-      `"${r.namaKaryawan}"`,
-      r.tanggal,
-      r.jenisAbsen,
-      `"${r.keterangan}"`,
-      r.timestamp,
+      escapeCsvField(i + 1),
+      escapeCsvField(r.namaKaryawan),
+      escapeCsvField(r.tanggal),
+      escapeCsvField(r.jenisAbsen),
+      escapeCsvField(r.keterangan),
+      escapeCsvField(r.timestamp),
     ])
 
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
@@ -248,7 +262,9 @@ export function useAttendance() {
     const link = document.createElement('a')
     link.href = url
     link.download = `absensi_karyawan_${new Date().toISOString().split('T')[0]!}.csv`
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
