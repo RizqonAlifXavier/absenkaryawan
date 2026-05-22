@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ABSEN_TYPES, ABSEN_TYPE_ORDER } from '@/config/sheetsConfig'
-import type { AbsenType } from '@/config/sheetsConfig'
+import type { AbsenType, AttendancePeriod } from '@/config/sheetsConfig'
 
 defineProps<{
   filterDateStart: string
@@ -10,12 +10,15 @@ defineProps<{
   uniqueNames: string[]
   totalFiltered: number
   totalRecords: number
+  selectedPeriod: AttendancePeriod
+  availablePeriods: AttendancePeriod[]
 }>()
 
 const emit = defineEmits<{
   'update:filterDateStart': [value: string]
   'update:filterDateEnd': [value: string]
   'update:filterNama': [value: string]
+  'update:selectedPeriod': [value: AttendancePeriod]
   toggleAbsenFilter: [type: AbsenType]
   resetFilters: []
   exportCsv: []
@@ -56,6 +59,28 @@ const isFiltered = (type: AbsenType, activeFilters: AbsenType[]) => activeFilter
     </div>
 
     <div class="filter-body">
+      <!-- Periode -->
+      <div class="filter-group filter-group-wide">
+        <label class="filter-label">📅 Periode Absensi</label>
+        <div class="period-selector">
+          <select
+            :value="availablePeriods.findIndex(p => p.startDate === selectedPeriod.startDate)"
+            @change="emit('update:selectedPeriod', availablePeriods[parseInt(($event.target as HTMLSelectElement).value, 10)]!)"
+            id="filter-period"
+            class="period-select"
+          >
+            <option v-for="(period, idx) in availablePeriods" :key="period.startDate" :value="idx">
+              {{ period.label }}
+            </option>
+          </select>
+          <span class="period-range">
+            {{ selectedPeriod.startDate.split('-').reverse().join('/') }}
+            —
+            {{ selectedPeriod.endDate.split('-').reverse().join('/') }}
+          </span>
+        </div>
+      </div>
+
       <!-- Date Range -->
       <div class="filter-group">
         <label class="filter-label">Tanggal Mulai</label>
@@ -219,6 +244,45 @@ const isFiltered = (type: AbsenType, activeFilters: AbsenType[]) => activeFilter
 
 .toggle-icon {
   font-size: 14px;
+}
+
+.period-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.period-select {
+  flex: 0 0 auto;
+  min-width: 180px;
+  padding: 10px 14px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.period-select:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.period-range {
+  padding: 6px 12px;
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {

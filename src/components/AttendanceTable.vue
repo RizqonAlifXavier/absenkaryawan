@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ABSEN_TYPES } from '@/config/sheetsConfig'
+import { ABSEN_TYPES, TABLE_PAGE_SIZE } from '@/config/sheetsConfig'
 import type { AbsenType } from '@/config/sheetsConfig'
 import type { AttendanceRecord } from '@/services/sheetsService'
 
@@ -153,7 +153,7 @@ function getPageRange(current: number, total: number): number[] {
             :key="record.id"
             class="data-row"
           >
-            <td class="td-no">{{ (currentPage - 1) * 15 + index + 1 }}</td>
+            <td class="td-no">{{ (currentPage - 1) * TABLE_PAGE_SIZE + index + 1 }}</td>
             <td class="td-nama">
               <div class="nama-cell">
                 <div class="avatar">{{ record.namaKaryawan.charAt(0).toUpperCase() }}</div>

@@ -12,6 +12,7 @@ const {
   error,
   lastUpdated,
   isDemoMode,
+  newDataNotification,
 
   // Filters
   filterDateStart,
@@ -19,6 +20,10 @@ const {
   filterNama,
   filterJenisAbsen,
   searchQuery,
+
+  // Periode
+  selectedPeriod,
+  availablePeriods,
 
   // Computed
   filteredRecords,
@@ -40,6 +45,7 @@ const {
   resetFilters,
   toggleAbsenFilter,
   exportToCsv,
+  dismissNotification,
 } = useAttendance()
 </script>
 
@@ -77,9 +83,12 @@ const {
         :unique-names="uniqueNames"
         :total-filtered="filteredRecords.length"
         :total-records="allRecords.length"
+        :selected-period="selectedPeriod"
+        :available-periods="availablePeriods"
         @update:filter-date-start="filterDateStart = $event"
         @update:filter-date-end="filterDateEnd = $event"
         @update:filter-nama="filterNama = $event"
+        @update:selected-period="selectedPeriod = $event"
         @toggle-absen-filter="toggleAbsenFilter"
         @reset-filters="resetFilters"
         @export-csv="exportToCsv"
@@ -100,6 +109,14 @@ const {
       @update:search-query="searchQuery = $event"
     />
     </main>
+
+    <!-- Toast Notification -->
+    <Transition name="toast">
+      <div v-if="newDataNotification" class="toast-notification" @click="dismissNotification">
+        <span class="toast-text">{{ newDataNotification }}</span>
+        <button class="toast-close" @click.stop="dismissNotification">✕</button>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -141,6 +158,78 @@ const {
 
   .dashboard-row {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Toast Notification */
+.toast-notification {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-modal);
+  cursor: pointer;
+  max-width: 320px;
+}
+
+.toast-text {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-izin);
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.toast-close:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Toast transition */
+.toast-enter-active {
+  animation: toastIn 0.4s ease forwards;
+}
+.toast-leave-active {
+  animation: toastOut 0.3s ease forwards;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100px) scale(0.9);
   }
 }
 </style>

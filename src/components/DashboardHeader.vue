@@ -126,7 +126,7 @@ function formatTime(date: Date | null): string {
 .logo-text h1 {
   font-size: var(--font-size-xl);
   font-weight: 800;
-  background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%);
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

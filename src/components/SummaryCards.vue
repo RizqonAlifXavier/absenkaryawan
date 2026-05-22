@@ -169,15 +169,15 @@ function getGlowVar(type: string): string {
 }
 
 .card-inner {
-  padding: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .card-icon {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--border-radius-md);
   display: flex;
   align-items: center;
@@ -191,7 +191,7 @@ function getGlowVar(type: string): string {
 }
 
 .icon-emoji {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
 }
 
@@ -199,19 +199,22 @@ function getGlowVar(type: string): string {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .card-label {
-  font-size: var(--font-size-xs);
+  font-size: 10px;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  white-space: nowrap;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .card-value {
-  font-size: var(--font-size-3xl);
+  font-size: var(--font-size-2xl);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -268,7 +271,7 @@ function getGlowVar(type: string): string {
   }
 
   .card-value {
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
   }
 }
 

@@ -43,26 +43,27 @@ function parseCsvLine(line: string): string[] {
 
 /**
  * Normalisasi tanggal ke format YYYY-MM-DD
+ * Google Sheets /pub?output=csv biasanya output format M/D/YYYY (US format)
  */
 function normalizeDate(dateStr: string): string {
   if (!dateStr) return ''
 
-  // Coba parse format DD/MM/YYYY
-  const dmyMatch = dateStr.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/)
-  if (dmyMatch) {
-    const day = dmyMatch[1]!
-    const month = dmyMatch[2]!
-    const year = dmyMatch[3]!
-    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-  }
-
-  // Coba parse format YYYY-MM-DD (sudah benar)
+  // Sudah format YYYY-MM-DD? Langsung return
   const ymdMatch = dateStr.match(/^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})$/)
   if (ymdMatch) {
     const year = ymdMatch[1]!
     const month = ymdMatch[2]!
     const day = ymdMatch[3]!
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+  }
+
+  // Coba parse dengan Date (handle M/D/YYYY, MM/DD/YYYY, dll dari Google Sheets)
+  const parsed = new Date(dateStr)
+  if (!isNaN(parsed.getTime())) {
+    const year = parsed.getFullYear()
+    const month = String(parsed.getMonth() + 1).padStart(2, '0')
+    const day = String(parsed.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   return dateStr
@@ -83,7 +84,7 @@ function normalizeAbsenType(raw: string): AbsenType {
  * Parse CSV string menjadi array of AttendanceRecord
  */
 function parseCsvToRecords(csv: string): AttendanceRecord[] {
-  const lines = csv.split('\n').filter((line) => line.trim() !== '')
+  const lines = csv.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter((line) => line.trim() !== '')
 
   if (lines.length < 2) return [] // Hanya header, tidak ada data
 

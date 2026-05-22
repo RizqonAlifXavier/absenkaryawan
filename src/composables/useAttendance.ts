@@ -2,12 +2,14 @@ import { ref, computed, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import { fetchAttendanceData, generateDemoData } from '@/services/sheetsService'
 import type { AttendanceRecord } from '@/services/sheetsService'
 import {
-  SPREADSHEET_ID,
+  PUBLISHED_CSV_URL,
   AUTO_REFRESH_INTERVAL,
   ABSEN_TYPE_ORDER,
   TABLE_PAGE_SIZE,
+  getCurrentPeriod,
+  generatePeriodList,
 } from '@/config/sheetsConfig'
-import type { AbsenType } from '@/config/sheetsConfig'
+import type { AbsenType, AttendancePeriod } from '@/config/sheetsConfig'
 
 export interface AttendanceStats {
   total: number
@@ -34,12 +36,29 @@ export function useAttendance() {
   const filterJenisAbsen = ref<AbsenType[]>([])
   const searchQuery = ref('')
 
+  // Periode (16 s/d 15 tiap bulan)
+  const availablePeriods = ref<AttendancePeriod[]>(generatePeriodList())
+  const selectedPeriod = ref<AttendancePeriod>(getCurrentPeriod())
+
   // Table
   const currentPage = ref(1)
   const sortColumn = ref<keyof AttendanceRecord>('tanggal')
   const sortDirection = ref<'asc' | 'desc'>('desc')
 
   let refreshTimer: ReturnType<typeof setInterval> | null = null
+  let previousRecordCount = 0
+
+  // Notifikasi data baru
+  const newDataNotification = ref<string | null>(null)
+  let notificationTimer: ReturnType<typeof setTimeout> | null = null
+
+  function showNotification(message: string) {
+    newDataNotification.value = message
+    if (notificationTimer) clearTimeout(notificationTimer)
+    notificationTimer = setTimeout(() => {
+      newDataNotification.value = null
+    }, 5000) // Hilang setelah 5 detik
+  }
 
   // =============================================
   // Fetch Data
@@ -49,13 +68,24 @@ export function useAttendance() {
     error.value = null
 
     try {
-      if (SPREADSHEET_ID === 'YOUR_SPREADSHEET_ID_HERE') {
+      if (!PUBLISHED_CSV_URL || PUBLISHED_CSV_URL.includes('YOUR_')) {
         // Demo mode jika belum dikonfigurasi
         isDemoMode.value = true
         allRecords.value = generateDemoData()
       } else {
         isDemoMode.value = false
-        allRecords.value = await fetchAttendanceData()
+        const newRecords = await fetchAttendanceData()
+        const newCount = newRecords.length
+        const oldCount = previousRecordCount
+
+        // Deteksi data baru (skip notifikasi saat pertama kali load)
+        if (oldCount > 0 && newCount > oldCount) {
+          const diff = newCount - oldCount
+          showNotification(`📥 ${diff} data baru masuk!`)
+        }
+
+        previousRecordCount = newCount
+        allRecords.value = newRecords
       }
       lastUpdated.value = new Date()
     } catch (e) {
@@ -74,20 +104,31 @@ export function useAttendance() {
     loadData()
   }
 
+  function dismissNotification() {
+    newDataNotification.value = null
+  }
+
   // =============================================
   // Auto-reset page ketika filter berubah
   // =============================================
-  watch([filterDateStart, filterDateEnd, filterNama, filterJenisAbsen, searchQuery], () => {
+  watch([filterDateStart, filterDateEnd, filterNama, filterJenisAbsen, searchQuery, selectedPeriod], () => {
     currentPage.value = 1
   }, { deep: true })
 
   // =============================================
-  // Filtered Records
+  // Filtered Records (periode dulu, baru filter manual)
   // =============================================
   const filteredRecords = computed(() => {
     let result = [...allRecords.value]
 
-    // Filter by date range
+    // Filter by periode (16-15)
+    if (selectedPeriod.value) {
+      result = result.filter(
+        (r) => r.tanggal >= selectedPeriod.value.startDate && r.tanggal <= selectedPeriod.value.endDate,
+      )
+    }
+
+    // Filter by date range (tambahan di dalam periode)
     if (filterDateStart.value) {
       result = result.filter((r) => r.tanggal >= filterDateStart.value)
     }
@@ -219,6 +260,8 @@ export function useAttendance() {
     filterNama.value = ''
     filterJenisAbsen.value = []
     searchQuery.value = ''
+    // Reset ke periode saat ini
+    selectedPeriod.value = getCurrentPeriod()
     currentPage.value = 1
   }
 
@@ -245,6 +288,18 @@ export function useAttendance() {
   }
 
   function exportToCsv() {
+    const period = selectedPeriod.value
+    const periodLabel = period.label.replace(/\s+/g, '_')
+
+    // Info periode di baris pertama
+    const infoRows = [
+      `Laporan Absensi Karyawan - Periode ${period.label}`,
+      `Tanggal: ${period.startDate} s/d ${period.endDate}`,
+      `Diekspor: ${new Date().toLocaleString('id-ID')}`,
+      `Jumlah Data: ${sortedRecords.value.length}`,
+      '', // Baris kosong pemisah
+    ]
+
     const headers = ['No', 'Nama Karyawan', 'Tanggal', 'Jenis Absen', 'Keterangan', 'Timestamp']
     const rows = sortedRecords.value.map((r, i) => [
       escapeCsvField(i + 1),
@@ -255,13 +310,13 @@ export function useAttendance() {
       escapeCsvField(r.timestamp),
     ])
 
-    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    const csv = [...infoRows, headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
 
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `absensi_karyawan_${new Date().toISOString().split('T')[0]!}.csv`
+    link.download = `absensi_${periodLabel}.csv`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -280,6 +335,9 @@ export function useAttendance() {
     if (refreshTimer) {
       clearInterval(refreshTimer)
     }
+    if (notificationTimer) {
+      clearTimeout(notificationTimer)
+    }
   })
 
   return {
@@ -289,6 +347,7 @@ export function useAttendance() {
     error,
     lastUpdated,
     isDemoMode,
+    newDataNotification,
 
     // Filters
     filterDateStart,
@@ -296,6 +355,10 @@ export function useAttendance() {
     filterNama,
     filterJenisAbsen,
     searchQuery,
+
+    // Periode
+    selectedPeriod,
+    availablePeriods,
 
     // Computed
     filteredRecords,
@@ -318,5 +381,6 @@ export function useAttendance() {
     resetFilters,
     toggleAbsenFilter,
     exportToCsv,
+    dismissNotification,
   }
 }

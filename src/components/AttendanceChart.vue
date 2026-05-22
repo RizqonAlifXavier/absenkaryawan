@@ -90,7 +90,7 @@ function drawDonut() {
   })
 
   // Center text
-  ctx.fillStyle = '#f1f5f9'
+  ctx.fillStyle = '#1e293b'
   ctx.font = '800 28px Inter, sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
@@ -153,7 +153,7 @@ function drawBarChart() {
       ctx.fill()
 
       // Value on top
-      ctx.fillStyle = '#f1f5f9'
+      ctx.fillStyle = '#1e293b'
       ctx.font = '600 11px Inter, sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'bottom'
